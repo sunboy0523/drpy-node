@@ -3,7 +3,7 @@
   searchable: 0,
   filterable: 0,
   quickSearch: 0,
-  title: 'webdav[盘]',
+  title: 'ftp[盘]',
   '类型': '影视',
   lang: 'ds'
 })
@@ -11,7 +11,7 @@
 
 var rule = {
     类型: '影视',
-    title: 'webdav[盘]',
+    title: 'ftp[盘]',
     host: '',
     url: '',
     searchUrl: '',
@@ -35,7 +35,7 @@ var rule = {
         try {
             rule.pans = JSON.parse(data);
         } catch (e) {
-            log('获取webdav配置错误:', e.message);
+            log('获取ftp配置错误:', e.message);
         }
     },
     class_parse: async function () {
@@ -50,12 +50,12 @@ var rule = {
         return {class: classList}
     },
     lazy: async function () {
-        let {input, webdavProxyUrl} = this;
+        let {input, ftpProxyUrl} = this;
         // log('input:', input);
-        // log('webdavProxyUrl:', webdavProxyUrl);
+        // log('ftpProxyUrl:', ftpProxyUrl);
         return {
             parse: 0,
-            url: webdavProxyUrl + input
+            url: ftpProxyUrl + input
         }
     },
     推荐: async function () {
@@ -72,10 +72,10 @@ var rule = {
         const _tid = tid.split('$')[1] || '/';
         let pan = rule.pans.find(it => it.id === _id || it.baseURL === _id);
         if (pan) {
-            const webdav = createWebDAVClient(pan);
-            const isConnected = await webdav.testConnection();
+            const ftp = createFTPClient(setAnonymous(pan));
+            const isConnected = await ftp.testConnection();
             if (isConnected) {
-                const rootItems = await webdav.listDirectory(_tid);
+                const rootItems = await ftp.listDirectory(_tid);
                 console.log('Root directory contents:');
                 rootItems.forEach(item => {
                     log(item);
@@ -104,10 +104,10 @@ var rule = {
         const _tid = tid.split('$')[1] || '/';
         let pan = rule.pans.find(it => it.id === _id || it.baseURL === _id);
         if (pan) {
-            const webdav = createWebDAVClient(pan);
-            const isConnected = await webdav.testConnection();
+            const ftp = createFTPClient(setAnonymous(pan));
+            const isConnected = await ftp.testConnection();
             if (isConnected) {
-                const itemInfo = await webdav.getInfo(_tid);
+                const itemInfo = await ftp.getInfo(_tid);
                 // log('itemInfo:');
                 // log(itemInfo);
                 VOD.vod_name = itemInfo.name;
@@ -129,4 +129,15 @@ var rule = {
         let d = [];
         return setResult(d)
     }
+}
+
+function setAnonymous(ftpConfig) {
+    // 支持匿名 FTP 访问
+    if (!ftpConfig.username || ftpConfig.username === 'your-username' || ftpConfig.username === '') {
+        ftpConfig.username = 'anonymous';
+    }
+    if (!ftpConfig.password || ftpConfig.password === 'your-password' || ftpConfig.password === '') {
+        ftpConfig.password = 'anonymous@example.com';
+    }
+    return ftpConfig;
 }
